@@ -1,0 +1,47 @@
+{
+  "skill_name": "xiaohongshu-publisher",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "请把 D:\\\\notes\\\\spring-campaign\\\\cover-1.png 和 D:\\\\notes\\\\spring-campaign\\\\cover-2.png 发布成一篇小红书图文。标题《春季活动预告》，正文“本周会上线两场直播和一份报名指南”，话题是 AI增长、产品运营。",
+      "expected_output": "使用 Chrome DevTools MCP 且要求为 --autoConnect，会打开固定的小红书创作者图文发布页，并通过同一个上传动作一次性上传两张本地图片，不会逐张或分批处理；随后填写标题和正文，把话题作为页面话题或回退为正文中的带空格分隔的 tag 文本，例如 ` #AI增长 #产品运营`，确认发布按钮可点击后执行真实发布，并汇报成功状态。",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "我刚用 info-card-designer 生成了一组卡片，目录在 D:\\\\Projects\\\\skills\\\\outputs\\\\info-cards\\\\20260403-ai-ecosystem。请直接发到小红书，标题《AI 生态观察》，正文“几张图看懂 AI 生态的新变化”，话题是 AI、创业观察。",
+      "expected_output": "把目录识别为 info-card-designer 输出目录，优先按 card-01.png、card-02.png 等顺序收集图片；然后通过 auto-connected Chrome 打开小红书图文发布页，把解析出的完整有序图片列表一次性上传，不逐张或分批补传；再填写标题正文与话题，并最终点击发布。",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "把 D:\\\\tmp\\\\launch\\\\poster.png 发到小红书，标题《版本上线》，正文“今天正式发布新版本”，话题是 产品发布。当前 Chrome 还没登录小红书。",
+      "expected_output": "打开固定发布页后检测到未登录时，不尝试自动登录，而是暂停并提示用户在已 auto-connect 的 Chrome 中手动登录；用户确认后再继续完成上传和发布。",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "请把 D:\\\\tmp\\\\cards\\\\card.png 发到小红书，标题《市场笔记》，正文“这是今天的观察”，不要发布成草稿，直接发出去。",
+      "expected_output": "不会停在草稿或预览，而是在完成标题、正文、图片检查并确认发布按钮可用后，点击最终“发布”一次并等待成功反馈。",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "目录 D:\\\\tmp\\\\empty-folder 里没有图片。请帮我发到小红书，标题《空目录测试》，正文“测试一下”。",
+      "expected_output": "会先在本地校验目录，发现没有可上传图片时直接失败并说明原因，不继续打开发布页，也不会尝试点击发布。",
+      "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "请把 D:\\\\tmp\\\\trend\\\\1.png 发到小红书，标题《趋势观察》，正文“这是本周趋势”，话题是 AI, AI, 增长策略。",
+      "expected_output": "会对 topics 去重并保持稳定顺序，优先通过页面话题交互插入；若候选不可用，则把去重后的带空格分隔 tag 文本 ` #AI #增长策略` 作为正文话题文本保留，并继续完成发布。",
+      "files": []
+    },
+    {
+      "id": 7,
+      "prompt": "请把 D:\\\\tmp\\\\batch\\\\01.png、D:\\\\tmp\\\\batch\\\\02.png、D:\\\\tmp\\\\batch\\\\03.png 和 D:\\\\tmp\\\\batch\\\\04.png 发到小红书，标题《四张卡片合集》，正文“这是一次性上传测试”。",
+      "expected_output": "会先保留这 4 张图片的输入顺序，然后通过同一个上传入口或文件输入框一次性提交全部 4 张图片，并等待缩略图数量与目标数量一致；如果上传失败，会直接报告页面错误，而不是改成逐张或分批上传。",
+      "files": []
+    }
+  ]
+}

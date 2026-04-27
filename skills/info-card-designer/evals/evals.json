@@ -1,0 +1,23 @@
+{
+  "skill_name": "info-card-designer",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "把这篇文章做成信息卡并导出图片，生成 HTML 后直接截图保存成 PNG。",
+      "expected_output": "会先生成 `outputs/[YYYYMMDD]-[topic]/card.html`，然后默认直接使用 Chrome DevTools MCP 打开本地 HTML，等待字体与布局稳定后按 `.card-page` 的 DOM 顺序逐页截图，输出 `card-01.png`、`card-02.png` 等 2x 图片；如果 Chrome DevTools MCP 不可用、未连接、无法保存截图或未找到 `.card-page`，则直接失败并说明原因，而不是改用 Playwright、`export_pages.py` 或其他无头浏览器。",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "把这段内容做成信息卡，要求信息密度中、字体合适、内容饱满。",
+      "expected_output": "默认生成 2-6 张 4:5 信息卡，采用中等信息密度而不是大字海报或长文密排；普通详情页至少 2 个实质信息块，理想 3 个，条目描述约 30-55 个中文字；正文目标 24-28px，条目标题目标 28-32px，subject-display 默认 clamp(64px, 8vw, 88px)，main-title 默认 clamp(44px, 5.5vw, 58px)；导出后需要检查饱满度，若 footer 上方纯空白超过约 12%、出现明显半页空白、单页只有标题加一行解释、或内容稀疏，必须重排 HTML 后重新导出。",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "把这篇文章做成多页信息卡，确保页眉和页脚一致。",
+      "expected_output": "生成的每张 .card-page 必须使用同一套页眉和页脚骨架，推荐第一层结构为 .card-header -> .card-body -> .footer；.card-header 的高度、padding、左右对齐、label 样式和 page-index 位置全页一致，允许变化的只有页码文本和当前页短标签；footer 全套只选 F1 或 F2 之一，分隔线、装饰符、字号、对齐和来源字段顺序全页一致；导出后若出现某页隐藏页脚、某页换居中页脚、某页移动页码、或 header/footer 结构不同，必须重排 HTML 后重新导出。",
+      "files": []
+    }
+  ]
+}
