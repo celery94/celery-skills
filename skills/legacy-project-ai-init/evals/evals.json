@@ -1,0 +1,65 @@
+{
+  "skill_name": "legacy-project-ai-init",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "The target repository is almost empty: it contains no source files, no package manifests, no build scripts, and no existing README. Initialize AI-agent development foundations for this old project without inventing a stack. Create the docs that are justified and explain anything you intentionally do not create.",
+      "expected_output": "Creates conservative README.md and AGENTS.md, marks project purpose/stack/run/build/test/deploy as unknown or needing confirmation, includes the required Approach rules, and avoids unsupported Copilot/architecture/env/PR template files.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Output explicitly states that project purpose, technology stack, run/build/test commands, deployment, and environment variables are not discoverable from the repository."
+        },
+        {
+          "text": "AGENTS.md contains the required Approach section with all required rules preserved in meaning."
+        },
+        {
+          "text": "The result does not invent a framework, package manager, service, deployment target, or test command."
+        },
+        {
+          "text": "The result explains why optional files such as Copilot instructions, architecture docs, .env.example, and PR templates were not created."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "This is an existing Node/React repository with package.json scripts for dev, build, lint, and test, a src/ directory, a tests/ directory, and a short outdated README. Initialize the repository for GitHub Copilot and AI-agent assisted development while preserving useful existing README content.",
+      "expected_output": "Updates README.md based on package.json and directory evidence, creates AGENTS.md, and adds concise Copilot guidance only if useful. Preserves useful README content instead of replacing everything with a generic template.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "README content is derived from package.json scripts and actual directories rather than generic Node/React assumptions."
+        },
+        {
+          "text": "Existing useful README content is preserved or integrated, not discarded wholesale."
+        },
+        {
+          "text": "AGENTS.md identifies relevant directories, commands, and change constraints for future agents."
+        },
+        {
+          "text": "Optional GitHub Copilot instructions are concise and do not duplicate the full AGENTS.md content."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "This is a maintained .NET or mixed-technology legacy repository with a solution file, several project directories, CI YAML, config files, and partial docs. Add AI development setup docs. Do not apply a frontend template, do not change code, and mark anything you cannot prove as needing confirmation.",
+      "expected_output": "Recognizes the .NET or mixed stack from manifests and CI, updates or creates README.md and AGENTS.md with real commands where discoverable, optionally adds architecture or contribution docs only when supported, and avoids code changes.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "The output recognizes stack evidence from solution/project files, CI, and config rather than applying a frontend-oriented template."
+        },
+        {
+          "text": "The documentation describes real project directories and commands where discoverable and marks unknowns as needing confirmation."
+        },
+        {
+          "text": "No business logic or source code is changed."
+        },
+        {
+          "text": "Optional architecture or contribution documentation is created only if repository evidence supports it."
+        }
+      ]
+    }
+  ]
+}
