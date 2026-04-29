@@ -22,11 +22,18 @@
 **默认字体**：`TsangerJinKai`
 **楷宋混排时正文**：`NotoSerifSC`
 
+生成 HTML 时，`@font-face src` 必须指向当前仓库内的字体文件，而不是复制下面示例中的旧机器路径。先解析 `skills/info-card-designer/assets/` 的绝对路径，再转换为浏览器可读的 `file:///...` URL：
+
+- `TsangerJinKai02-W04.ttf`
+- `NotoSerifSC-Regular.ttf`
+
+Windows 路径示例：`D:\Projects\skills\celery-skills\skills\info-card-designer\assets\TsangerJinKai02-W04.ttf` 必须写成 `file:///D:/Projects/skills/celery-skills/skills/info-card-designer/assets/TsangerJinKai02-W04.ttf`。
+
 ```html
 <style>
   @font-face {
     font-family: "TsangerJinKai";
-    src: url("file:///Users/joe/.claude/skills/qiaomu-info-card-designer/assets/TsangerJinKai02-W04.ttf")
+    src: url("file:///ABSOLUTE/PATH/TO/skills/info-card-designer/assets/TsangerJinKai02-W04.ttf")
       format("truetype");
     font-weight: normal;
     font-style: normal;
@@ -35,7 +42,7 @@
 
   @font-face {
     font-family: "NotoSerifSC";
-    src: url("file:///Users/joe/.claude/skills/qiaomu-info-card-designer/assets/NotoSerifSC-Regular.ttf")
+    src: url("file:///ABSOLUTE/PATH/TO/skills/info-card-designer/assets/NotoSerifSC-Regular.ttf")
       format("truetype");
     font-weight: normal;
     font-style: normal;
@@ -396,6 +403,8 @@ body {
 
 导出方式必须是：用 **Chrome DevTools MCP** 单独打开本地 `card.html`，并将每个 `.card-page` 按 DOM 顺序单独导出成 PNG。
 
+`scripts/export_pages.py` 是旧的手动/诊断辅助脚本，不是默认导出路径。只有用户明确要求调试该脚本，或技能说明未来明确允许时，才使用它。
+
 导出时必须满足：
 
 - 至少有 2 页，且文件名连续：`card-01.png`, `card-02.png` ...
@@ -405,6 +414,8 @@ body {
 - 不允许回退到 Playwright、Puppeteer 或其他独立渲染器
 - 无裁切、无空白尾页、无只有半页内容的独立收尾页
 - 每页 `.card-header` 与 `.footer` 结构和视觉一致；不一致视为失败
+- 首图承担封面和主结论职责；末图自然收束，不引入正文外新事实
+- 字体实际加载成功；若截图呈现系统默认字体或乱码，必须修正 `file:///...` 字体路径后重导
 - 页面异常时回到 HTML 重排，不做长图切分补救
 
 ## Layout & Pagination

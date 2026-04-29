@@ -1,8 +1,8 @@
 # Cover Prompt Template
 
-创建文章封面时，先用这个模板生成**草图 prompt**，必要时再生成**编辑 prompt**，然后调用 `azure-image-gen`。
+创建文章封面时，先用这个模板生成**封面 brief**和第一轮 prompt，再调用 `imagegen`。`azure-image-gen` 只作为明确回退路径。
 
-不要默认“一次生成 = 最终封面”。`gpt-image-2` 更适合先确认概念与构图，再基于已有图继续编辑收敛。
+不要默认“一次生成 = 最终封面”。先确认主题、主体、动作和构图是否成立，再根据问题做一次定向编辑或重生。
 
 ## 1. 先判断封面类型
 
@@ -22,25 +22,30 @@
 - 明显在做判断、比较、批评、趋势分析：用 `analysis`
 - 明显在拆机制、模型、算法、论文结论：用 `research`
 
-## 2. 先填这几个槽位
+## 2. 先保存封面 brief
 
-生成 prompt 前先写出这些信息，不要跳过：
+生成 prompt 前先写出这些信息，并保存到 `src/assets/{ID}/cover-brief.json`。不要跳过 brief 直接写 prompt。
 
-- `文章标题`：中文标题
-- `文章类型`：上面的 5 选 1
-- `核心主题`：这篇文章到底在讲什么
-- `读者收获`：读完之后能理解什么或做成什么
-- `封面主隐喻`：用什么视觉隐喻表达主题
-- `主视觉主体`：画面里最重要的 1 个主体
-- `主体动作`：主体正在做什么，或处于什么关系里
-- `构图方式`：居中主物体 / 左右对照 / 斜向推进 / 等距空间 / 单点聚焦
-- `背景元素`：只保留 1-3 个辅助元素
-- `风格方向`：按下方决策表填写
-- `色彩限制`：2-4 个主色，不要彩虹拼盘
-- `禁用元素`：和主题无关、但模型容易乱加的东西
-- `参考素材策略`：纯文本生成 / 用 1-2 张本地图片做 reference / 先生成再编辑 / 局部遮罩
-- `第一轮目标`：这次先验证什么（主题是否成立、主体是否清楚、构图是否稳）
-- `第二轮修正点`：如果第一轮出来后要改，优先改哪 1-3 项
+```json
+{
+  "article_title": "中文标题",
+  "cover_type": "tutorial | release | architecture | analysis | research",
+  "core_theme": "这篇文章到底在讲什么",
+  "reader_takeaway": "读完之后能理解什么或做成什么",
+  "main_metaphor": "用什么视觉隐喻表达主题",
+  "primary_subject": "画面里最重要的 1 个主体",
+  "subject_action": "主体正在做什么，或处于什么关系里",
+  "composition": "居中主物体 / 左右对照 / 斜向推进 / 等距空间 / 单点聚焦",
+  "background_elements": ["只保留 1-3 个辅助元素"],
+  "style_direction": "按类型映射表填写",
+  "color_palette": ["2-4 个主色"],
+  "avoid": ["和主题无关、但模型容易乱加的东西"],
+  "reference_strategy": "纯文本生成 / 使用 1-2 张允许复用的本地参考图 / 编辑上一轮结果",
+  "draft_goal": "第一轮先验证什么",
+  "revision_targets": ["如果第一轮要改，优先改哪 1-3 项"],
+  "final_prompt": "最终用于生图的 prompt"
+}
+```
 
 ## 3. 类型到风格的固定映射
 
@@ -60,24 +65,29 @@
 - 只有文章天然适合时，才允许显式加入这类风格词
 - 如果用了像素风或动漫感，也要先满足“主隐喻清楚、主体明确、构图简洁”
 
-## 4. `gpt-image-2` 参数默认值
+## 4. 默认生图后端
 
-除非文章题材有特殊需要，否则封面优先按这组参数来：
+优先使用 `imagegen`：
 
-- **草图阶段**
-	- `size`: `1504x640`
-	- `quality`: `low`
-	- `background`: `auto` 或 `opaque`
-	- `format`: 追求速度时用 `jpeg` / `webp`；准备马上进入编辑流时优先保留 `png`
-- **精修阶段**
-	- `size`: `2256x960`
-	- `quality`: `medium`
-	- 只有复杂结构、材质或光影不够稳定时才升到 `high`
-- **统一规则**
-	- 宽高比固定 2.35:1
-	- `gpt-image-2` 当前不支持透明背景，不要用 `transparent`
-	- 不要依赖图中可见文字来表达主题；这个模型虽然比以前更强，但文字排版仍然不是封面成功的关键路径
-	- 当前脚本即使传 `--n > 1` 也只保存第一张，所以多方案探索请分多次生成或改走编辑流
+- 用内置 `image_gen` 工具生成第一轮封面
+- 封面默认是宽图，prompt 里写明 `wide cover illustration, aspect ratio 2.35:1`
+- 如果工具输出在 `$CODEX_HOME/generated_images/...`，最终选中后移动或复制到 `src/assets/{ID}/01-cover.{ext}`
+- 不要让 `ogImage`、正文图片引用或微信封面引用默认生成目录
+- 如果第一轮主题对但细节有问题，优先编辑或定向重生一次；每轮只改 1-3 个明确问题
+- 如果第一轮主题就不对，回到 brief，至少改“主隐喻 / 主体动作 / 构图方式”中的两项后重新生成
+
+只有在这些情况下回退到 `azure-image-gen`：
+
+- `imagegen` 明显不可用
+- `imagegen` 连续失败，且失败不是 prompt 可修正的问题
+- 用户明确要求 Azure / `azure-image-gen` / Azure OpenAI
+
+Azure 回退参数：
+
+- 草图阶段：`size 1504x640`，`quality low`
+- 终稿阶段：`size 2256x960`，`quality medium`
+- `background` 只用 `auto` 或 `opaque`
+- 当前脚本即使传 `--n > 1` 也只保存第一张，所以多方案探索要分多次生成或改走编辑流
 
 ## 5. 统一禁令
 
@@ -103,7 +113,7 @@
 - 赛博朋克紫蓝光污染
 - 巨量 HUD 浮层
 
-如果第一轮结果里出现了这些元素，优先在第二轮编辑里明确写“remove / no / avoid”，而不是寄希望于模型自己悟出来。
+如果第一轮结果里出现这些元素，优先在第二轮 prompt 里明确写 `remove / no / avoid`，不要寄希望于模型自己悟出来。
 
 ## 6. Prompt 骨架
 
@@ -112,28 +122,26 @@
 用下面这套结构输出**第一轮草图 prompt**：
 
 ```text
-Create a wide cinematic cover illustration for a Chinese tech blog article.
-Theme: {核心主题}. The reader should quickly feel {读者收获}.
+Use case: stylized-concept
+Asset type: wide cover illustration for a Chinese tech blog article
+Primary request: Create a wide cinematic cover illustration. Theme: {核心主题}. The reader should quickly feel {读者收获}.
 
 Main metaphor: {封面主隐喻}.
-Primary subject: {主视觉主体}, {主体动作}.
-Composition: {构图方式}. Keep one clear focal point and use {背景元素} only as supporting context.
-
-Style: {风格方向}. Stylized, polished, editorial, visually strong, suitable for a modern engineering article cover.
+Subject: {主视觉主体}, {主体动作}.
+Composition/framing: {构图方式}. Wide 2.35:1 cover composition with one clear focal point. Use {背景元素} only as supporting context.
+Style/medium: {风格方向}. Stylized, polished, editorial, visually strong, suitable for a modern engineering article cover.
 Color palette: {色彩限制}.
-Aspect ratio 2.35:1.
-
-Do not include any visible text, title, letters, UI labels, prompt residue, watermark, screenshots, dashboards, fake diagrams, fake terminal output, unrelated icons, or decorative clutter.
-Avoid {禁用元素}.
+Constraints: no visible text, no title, no letters, no UI labels, no prompt residue, no watermark, no screenshots, no dashboards, no fake diagrams, no fake charts, no fake terminal output, no unrelated icons, no decorative clutter.
+Avoid: {禁用元素}.
 ```
 
 ### 6.2 第二轮：编辑 / 精修 prompt
 
-当第一轮已经有可用方向，但需要修主体、背景、风格、误生成元素时，不要重写一整套世界观，优先把第一张图作为输入图，再用这套结构写**编辑 prompt**：
+当第一轮已经有可用方向，但需要修主体、背景、风格、误生成元素时，优先用这套结构写**编辑或定向重生 prompt**：
 
 ```text
-Use the provided image as the base.
-Keep the strongest part of the current composition and preserve the core metaphor: {封面主隐喻}.
+Use the current cover direction as the base.
+Keep the strongest part of the composition and preserve the core metaphor: {封面主隐喻}.
 
 Change only these points:
 - {第二轮修正点 1}
@@ -143,17 +151,18 @@ Change only these points:
 Make the image feel more like {风格方向}. Preserve one clear focal point.
 Primary subject should remain: {主视觉主体}, {主体动作}.
 Simplify the background so that only {背景元素} remains as supporting context.
-Color palette: {色彩限制}. Aspect ratio 2.35:1.
+Color palette: {色彩限制}. Wide 2.35:1 cover composition.
 
 Remove any visible text, title, letters, UI labels, fake screenshots, fake charts, fake terminal output, watermark, prompt residue, unrelated icons, and decorative clutter.
 Avoid {禁用元素}.
 ```
 
-### 6.3 何时用参考图 / 遮罩
+### 6.3 何时用参考图
 
-- 如果你已经有**允许复用的本地图片**，而且它能明确帮助模型抓住主体关系、空间结构或关键对象，可以把它作为 `--input-image`
-- 如果只是局部元素跑偏，例如错误多出一个屏幕、背景里出现了假图表、主物体边上多了无关符号，再考虑 `--mask`
-- 如果第一轮主题就不对，不要强行 edit；回到槽位，改“主隐喻 / 主体动作 / 构图方式”至少两项，再重新生成
+- 如果已经有**允许复用的本地图片**，而且它能明确帮助模型抓住主体关系、空间结构或关键对象，可以把它作为参考图
+- 第三方版权海报、品牌 KV、原站营销插画、需要精确复刻的产品界面不能作为像素级临摹对象
+- 如果参考图只是原网页截图，要防止最终图看起来像“网页截图换滤镜”
+- 如果第一轮主题就不对，不要强行编辑；回到 brief 重写
 
 ## 7. 使用要求
 
@@ -163,12 +172,14 @@ Avoid {禁用元素}.
 - 非发布类文章，默认不要做成广告横幅
 - 架构类文章可以表达“连接关系”，但不要伪造真实系统图
 - 研究类文章可以抽象，但不能抽象到完全看不出主题
-- 每一轮生成后都要看 `revised_prompt`（如果接口返回了它），确认模型有没有把图往“标题海报、仪表盘、假架构图、截图 UI”方向带偏
-- 判断逻辑要固定：
-	- **主题不对**：回到槽位重写，再生成
-	- **主题对但细节不对**：优先编辑已有图
-	- **只有局部出错**：再考虑遮罩
-- 不要把“多堆一点风格词”当成唯一优化方式；对 `gpt-image-2` 来说，清楚的主隐喻、主体关系和删减杂物，通常比多加十个形容词更有效
+- 不要把“多堆一点风格词”当成唯一优化方式；清楚的主隐喻、主体关系和删减杂物通常更有效
+
+验收逻辑固定为：
+
+- **主题不对**：回到 brief 重写，再生成
+- **主题对但细节不对**：优先编辑或定向重生
+- **只有局部出错**：只修局部问题，不推倒整张图
+- **已经合格**：移动或复制到 `src/assets/{ID}/01-cover.{ext}`，更新 Markdown / `ogImage` / 微信封面路径
 
 ## 8. 示例
 
@@ -192,39 +203,17 @@ Avoid {禁用元素}.
 输出 prompt：
 
 ```text
-Create a wide cinematic cover illustration for a Chinese tech blog article.
-Theme: installing and using an OpenAI Codex plugin inside Claude Code. The reader should quickly feel that this is a practical hands-on workflow they can follow immediately.
+Use case: stylized-concept
+Asset type: wide cover illustration for a Chinese tech blog article
+Primary request: Create a wide cinematic cover illustration. Theme: installing and using an OpenAI Codex plugin inside Claude Code. The reader should quickly feel that this is a practical hands-on workflow they can follow immediately.
 
 Main metaphor: two AI coding capabilities connected into one developer workflow on a single workstation.
-Primary subject: a terminal-centric developer workstation with a plugin module, the plugin module sliding into a side slot and lighting up as it connects.
-Composition: single focal point with a slight diagonal forward motion. Keep one clear focal point and use a few command-like motion lines, one simplified tool emblem, and soft interface silhouettes only as supporting context.
-
-Style: editorial technical illustration. Stylized, polished, editorial, visually strong, suitable for a modern engineering article cover.
+Subject: a terminal-centric developer workstation with a plugin module, the plugin module sliding into a side slot and lighting up as it connects.
+Composition/framing: single focal point with a slight diagonal forward motion. Wide 2.35:1 cover composition with one clear focal point. Use a few command-like motion lines, one simplified tool emblem, and soft interface silhouettes only as supporting context.
+Style/medium: editorial technical illustration. Stylized, polished, editorial, visually strong, suitable for a modern engineering article cover.
 Color palette: charcoal, soft teal, warm orange, off-white.
-Aspect ratio 2.35:1.
-
-Do not include any visible text, title, letters, UI labels, prompt residue, watermark, screenshots, dashboards, fake diagrams, fake terminal output, unrelated icons, or decorative clutter.
-Avoid floating robots, neon city, dense code rain.
-```
-
-如果第一轮结果已经有了“工作台 + 插件插入”的主结构，但背景里冒出了假 UI 文本或多余面板，第二轮编辑 prompt 可以写成：
-
-```text
-Use the provided image as the base.
-Keep the strongest part of the current composition and preserve the core metaphor: two AI coding capabilities connected into one developer workflow on a single workstation.
-
-Change only these points:
-- remove all text-like marks and pseudo UI labels
-- simplify the background so it reads as supporting context rather than a screenshot
-- make the plugin insertion action clearer and more visually decisive
-
-Make the image feel more like editorial technical illustration. Preserve one clear focal point.
-Primary subject should remain: a terminal-centric developer workstation with a plugin module, the plugin module sliding into a side slot and lighting up as it connects.
-Simplify the background so that only a few command-like motion lines, one simplified tool emblem, and soft interface silhouettes remain as supporting context.
-Color palette: charcoal, soft teal, warm orange, off-white. Aspect ratio 2.35:1.
-
-Remove any visible text, title, letters, UI labels, fake screenshots, fake charts, fake terminal output, watermark, prompt residue, unrelated icons, and decorative clutter.
-Avoid floating robots, neon city, dense code rain.
+Constraints: no visible text, no title, no letters, no UI labels, no prompt residue, no watermark, no screenshots, no dashboards, no fake diagrams, no fake charts, no fake terminal output, no unrelated icons, no decorative clutter.
+Avoid: floating robots, neon city, dense code rain.
 ```
 
 ### 示例 2：架构 / 工作流类
@@ -247,19 +236,17 @@ Avoid floating robots, neon city, dense code rain.
 输出 prompt：
 
 ```text
-Create a wide cinematic cover illustration for a Chinese tech blog article.
-Theme: a sequential multi-agent code analysis pipeline built with GitHub Copilot SDK in C#. The reader should quickly feel how separate agents collaborate and merge their outputs into one report.
+Use case: stylized-concept
+Asset type: wide cover illustration for a Chinese tech blog article
+Primary request: Create a wide cinematic cover illustration. Theme: a sequential multi-agent code analysis pipeline built with GitHub Copilot SDK in C#. The reader should quickly feel how separate agents collaborate and merge their outputs into one report.
 
 Main metaphor: a modular analysis factory where specialized processing units form one clear pipeline.
-Primary subject: three distinct analysis nodes and one final synthesis node, with code fragments flowing through them from left to right and becoming a finished report.
-Composition: isometric scene with left-to-right staged progression. Keep one clear focal point and use thin connection lines, report-card silhouettes, and a restrained data-flow light band only as supporting context.
-
-Style: isometric conceptual systems scene. Stylized, polished, editorial, visually strong, suitable for a modern engineering article cover.
+Subject: three distinct analysis nodes and one final synthesis node, with code fragments flowing through them from left to right and becoming a finished report.
+Composition/framing: isometric scene with left-to-right staged progression. Wide 2.35:1 cover composition with one clear focal point. Use thin connection lines, report-card silhouettes, and a restrained data-flow light band only as supporting context.
+Style/medium: isometric conceptual systems scene. Stylized, polished, editorial, visually strong, suitable for a modern engineering article cover.
 Color palette: deep navy, steel blue, amber, pale cyan.
-Aspect ratio 2.35:1.
-
-Do not include any visible text, title, letters, UI labels, prompt residue, watermark, screenshots, dashboards, fake diagrams, fake terminal output, unrelated icons, or decorative clutter.
-Avoid real dashboards, fake charts, hologram overload.
+Constraints: no visible text, no title, no letters, no UI labels, no prompt residue, no watermark, no screenshots, no dashboards, no fake diagrams, no fake charts, no fake terminal output, no unrelated icons, no decorative clutter.
+Avoid: real dashboards, fake charts, hologram overload.
 ```
 
 ### 示例 3：观点 / 分析类
@@ -282,17 +269,15 @@ Avoid real dashboards, fake charts, hologram overload.
 输出 prompt：
 
 ```text
-Create a wide cinematic cover illustration for a Chinese tech blog article.
-Theme: structured specifications bringing order to AI coding workflows that would otherwise drift under pure prompt-driven development. The reader should quickly feel that clear specs create control, alignment, and execution stability.
+Use case: stylized-concept
+Asset type: wide cover illustration for a Chinese tech blog article
+Primary request: Create a wide cinematic cover illustration. Theme: structured specifications bringing order to AI coding workflows that would otherwise drift under pure prompt-driven development. The reader should quickly feel that clear specs create control, alignment, and execution stability.
 
 Main metaphor: a precise blueprint pressing down on scattered drafts and fragmented instructions, forcing them into an ordered path.
-Primary subject: a central specification blueprint surrounded by loose sketch pages and fragmented instruction cards, the blueprint imposing structure outward.
-Composition: centered main object with restrained surrounding contrast and inward convergence. Keep one clear focal point and use a few paper edges, path lines, and partially organized fragment cards only as supporting context.
-
-Style: conceptual editorial illustration. Stylized, polished, editorial, visually strong, suitable for a modern engineering article cover.
+Subject: a central specification blueprint surrounded by loose sketch pages and fragmented instruction cards, the blueprint imposing structure outward.
+Composition/framing: centered main object with restrained surrounding contrast and inward convergence. Wide 2.35:1 cover composition with one clear focal point. Use a few paper edges, path lines, and partially organized fragment cards only as supporting context.
+Style/medium: conceptual editorial illustration. Stylized, polished, editorial, visually strong, suitable for a modern engineering article cover.
 Color palette: ink black, paper white, muted blue, restrained coral.
-Aspect ratio 2.35:1.
-
-Do not include any visible text, title, letters, UI labels, prompt residue, watermark, screenshots, dashboards, fake diagrams, fake terminal output, unrelated icons, or decorative clutter.
-Avoid robot mascots, floating code blocks everywhere, poster slogans.
+Constraints: no visible text, no title, no letters, no UI labels, no prompt residue, no watermark, no screenshots, no dashboards, no fake diagrams, no fake charts, no fake terminal output, no unrelated icons, no decorative clutter.
+Avoid: robot mascots, floating code blocks everywhere, poster slogans.
 ```

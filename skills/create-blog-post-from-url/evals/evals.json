@@ -1,0 +1,93 @@
+{
+  "skill_name": "create-blog-post-from-url",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "请把这篇文章改写成一篇中文博客并生成封面，然后发布到微信公众号草稿箱：https://www.anthropic.com/engineering/building-effective-agents",
+      "expected_output": "会先用 Chrome DevTools MCP 抓取正文并形成结构化笔记，再生成中文 Markdown 博客。封面阶段默认读取 `references/cover-prompt-template.md`，创建 `src/assets/{ID}/cover-brief.json`，优先调用 `imagegen` 生成宽封面，把最终选中图保存为 `src/assets/{ID}/01-cover.{ext}`，并把 `ogImage` 与 `wechat-draft` 的 `cover-image` 都指向这个最终实际路径。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Cover generation uses `imagegen` as the default backend, not `azure-image-gen`."
+        },
+        {
+          "text": "The workflow creates or describes a cover brief before writing the final image prompt."
+        },
+        {
+          "text": "The final cover image is saved under `src/assets/{ID}/` rather than left in a generated-images temp/default directory."
+        },
+        {
+          "text": "`ogImage` and the WeChat `cover-image` parameter reference the final cover path."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "把这个产品发布页写成中文博客，封面用默认方式生成，不要做成产品截图：https://openai.com/index/introducing-gpt-image-2/",
+      "expected_output": "会把文章类型识别为产品更新 / 发布型，封面 brief 中选择 `release`，用产品发布感但非广告横幅的视觉隐喻。prompt 明确包含 no text、no title、no watermark、no UI screenshot、no dashboard、no fake diagram labels、no fake terminal output 等限制，避免生成假产品界面或带标题字样的海报。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "The cover type is selected from the fixed taxonomy and is appropriate for a product/release article."
+        },
+        {
+          "text": "The image prompt forbids visible title text, watermarks, UI screenshots, dashboards, fake diagrams, and fake terminal output."
+        },
+        {
+          "text": "The cover concept expresses the article theme without pretending to be a real product screenshot."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "请用 Azure OpenAI 生成封面，把这篇英文教程改写成中文博客并推到微信草稿箱：https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/dall-e",
+      "expected_output": "会尊重用户明确指定 Azure 的要求，在封面阶段走 `azure-image-gen` 回退路径；仍然先生成 `cover-brief.json`，按模板构造 prompt，并把 Azure 脚本最终输出的实际文件路径（可能是 `.png`、`.jpg` 或 `.webp`）同步到 Markdown `ogImage` 和 `wechat-draft` 的 `cover-image`。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Explicit Azure preference overrides the default `imagegen` backend."
+        },
+        {
+          "text": "The Azure final output path extension is treated as authoritative."
+        },
+        {
+          "text": "The final image path is propagated consistently to blog frontmatter and WeChat publishing."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "把这篇架构文章写成中文博客。封面可以参考正文里的架构图，但不能照抄，也不能生成假的架构标签：https://example.com/agent-workflow-architecture",
+      "expected_output": "会把文章类型识别为架构 / 系统设计，先判断正文图片是否允许复用且是否只用于主体关系参考。封面 prompt 可以表达模块连接和流程关系，但必须避免复制原图、避免真实架构图截图感，并明确禁止 fake diagram labels、UI screenshot、dashboard、terminal output。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Reference images are used only for composition or subject relationships, not pixel-level copying."
+        },
+        {
+          "text": "Architecture covers may show conceptual connections but must not create fake labeled system diagrams."
+        },
+        {
+          "text": "The prompt includes a clear avoid list for fake labels and screenshot-like artifacts."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "只把这个链接写成博客，不要生成封面，也不要发微信：https://example.com/short-note",
+      "expected_output": "会尊重用户明确的范围限制：仍然抓取 URL、生成中文 Markdown、写入 frontmatter 和参考链接，但跳过 `imagegen` / `azure-image-gen` 封面生成，不写 `ogImage`，也不调用 `wechat-draft`。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "The explicit no-cover request prevents any image generation backend from being invoked."
+        },
+        {
+          "text": "The explicit no-WeChat request prevents `wechat-draft` from being invoked."
+        },
+        {
+          "text": "The blog article is still generated normally without `ogImage`."
+        }
+      ]
+    }
+  ]
+}
