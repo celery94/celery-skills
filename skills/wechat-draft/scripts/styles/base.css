@@ -53,13 +53,43 @@
 .wechat-article-body ul {
   margin: 1em 0;
   padding-left: 1.5em;
+  list-style-position: outside;
+  list-style-type: disc;
 }
 .wechat-article-body ol {
   margin: 1em 0;
   padding-left: 1.6em;
+  list-style-position: outside;
+  list-style-type: decimal;
+}
+.wechat-article-body ul ul,
+.wechat-article-body ol ul {
+  margin: 0.45em 0 0.25em;
+  list-style-type: circle;
+}
+.wechat-article-body ul ul ul,
+.wechat-article-body ol ul ul {
+  list-style-type: square;
+}
+.wechat-article-body ol ol,
+.wechat-article-body ul ol {
+  margin: 0.45em 0 0.25em;
+  list-style-type: lower-alpha;
+}
+.wechat-article-body ol ol ol,
+.wechat-article-body ul ol ol {
+  list-style-type: lower-roman;
 }
 .wechat-article-body li {
+  display: list-item;
   margin: 0.35em 0;
+}
+.wechat-article-body li > p {
+  margin: 0.3em 0;
+}
+.wechat-article-body li > ul,
+.wechat-article-body li > ol {
+  margin-top: 0.4em;
 }
 .wechat-article-body blockquote {
   margin: 1.2em 0;

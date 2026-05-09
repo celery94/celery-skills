@@ -17,12 +17,14 @@
   font-size: 17px;
   color: #1e40af;
 }
+.wechat-article-body ul,
 .wechat-article-body ol {
   padding-left: 1.8em;
 }
+.wechat-article-body ul li,
 .wechat-article-body ol li {
   margin: 0.55em 0;
-  padding-left: 0.3em;
+  padding-left: 0.2em;
 }
 .wechat-article-body li strong {
   color: #1e40af;
