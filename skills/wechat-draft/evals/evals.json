@@ -11,6 +11,7 @@
       "id": 2,
       "prompt": "帮我把下面这段 HTML 内容发布到公众号草稿箱，带上封面图片 cover.jpg。\napp_id=wx123456789abcdef，app_secret=abcdefg1234567890\n标题：春节活动预告\n内容：<p>我们将在2月10日举办线上直播活动，敬请期待！</p>\n封面图：/home/user/images/cover.jpg",
       "expected_output": "调用脚本，先上传封面图片获取 thumb_media_id，再提交草稿，最终输出包含 media_id 的成功结果。",
+      "files": []
     },
     {
       "id": 9,
@@ -29,11 +30,10 @@
       "prompt": "我刚用 info-card-designer 生成了一批图片，目录在 /tmp/info-cards/20260403-ai-ecosystem。请直接发到微信公众号草稿箱，标题用《AI 生态观察》，如果目录里图片超过 20 张，只发前 20 张并告诉我。凭据从环境变量读取。",
       "expected_output": "调用 publish_draft.py 时使用 --article-type newspic 和 --image-dir，从目录按文件名顺序收集图片；若超过 20 张则截断为前 20 张并向用户提示，再创建图片消息草稿并返回 media_id。",
       "files": []
-      "files": []
     },
     {
       "id": 3,
-      "prompt": "我想把一篇技术文章推送到微信公众号。这是内容：《如何用 Python 自动化日常任务》，作者张三，摘要是"本文介绍5个实用的Python脚本"，原文链接 https://example.com/python-automation。内容文件在 article.html。AppID 和 Secret 我会设置在环境变量里。",
+      "prompt": "我想把一篇技术文章推送到微信公众号。这是内容：《如何用 Python 自动化日常任务》，作者张三，摘要是“本文介绍5个实用的Python脚本”，原文链接 https://example.com/python-automation。内容文件在 article.html。AppID 和 Secret 我会设置在环境变量里。",
       "expected_output": "调用脚本，携带 author、digest、content_source_url 参数，从 article.html 读取内容，提交草稿并返回 media_id。",
       "files": []
     },
@@ -65,6 +65,12 @@
       "id": 8,
       "prompt": "我有一篇 Markdown 文章要推到公众号，里面有一个“参考链接”章节，内容像这样：'## 参考链接\\n- [官方文档](https://example.com/docs)\\n- [发布说明](https://example.com/release)'。请确保这个章节里链接直接显示 URL，而不是“官方文档”或“发布说明”这些文字。凭据从环境变量读取。",
       "expected_output": "调用脚本转换 Markdown 时，在“参考链接”章节内保留链接可点击，但可见文字直接显示 URL 本身，例如 https://example.com/docs。",
+      "files": []
+    },
+    {
+      "id": 12,
+      "prompt": "请把一段包含空列表项的 Markdown 发布到微信公众号草稿箱：标题《列表清理验证》，正文是 '# T\\n\\n- \\n\\n- item one\\n\\n- \\n\\n- item two\\n\\n- '。凭据从环境变量读取。",
+      "expected_output": "调用脚本转换 Markdown 并内联样式时，应在提交草稿前删除空白 li 和清理后为空的 ul/ol；最终 HTML 只保留 item one 和 item two 两个列表项，不出现空白项目符号。",
       "files": []
     }
   ]

@@ -21,7 +21,7 @@ import re
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from bs4 import BeautifulSoup, Comment
+from bs4 import BeautifulSoup, Comment, NavigableString, Tag
 
 # ---------------------------------------------------------------------------
 # CSS specificity helpers
@@ -321,6 +321,29 @@ def sanitize_html_fragment(soup: BeautifulSoup) -> None:
             tag.attrs.pop(attr_name, None)
 
 
+def has_meaningful_list_content(node) -> bool:
+    if isinstance(node, NavigableString):
+        return bool(str(node).replace("\xa0", " ").strip())
+    if not isinstance(node, Tag):
+        return False
+    if node.name == "br":
+        return False
+    if node.name == "img":
+        return bool(node.get("src", "").strip())
+    return any(has_meaningful_list_content(child) for child in node.contents)
+
+
+def remove_empty_list_items(soup: BeautifulSoup) -> None:
+    """Remove blank Markdown list artifacts before WeChat renders them as bullets."""
+    for item in list(soup.find_all("li")):
+        if not has_meaningful_list_content(item):
+            item.decompose()
+
+    for list_tag in reversed(soup.find_all(["ul", "ol"])):
+        if not has_meaningful_list_content(list_tag):
+            list_tag.decompose()
+
+
 def apply_inline_css(soup: BeautifulSoup, css_text: str) -> None:
     """Apply *css_text* as inline styles onto *soup*, respecting CSS specificity.
 
@@ -388,6 +411,7 @@ def build_styled_fragment(
     wrapped = f'<article class="wechat-article-body">{fragment_html}</article>'
     soup = BeautifulSoup(wrapped, "html.parser")
     sanitize_html_fragment(soup)
+    remove_empty_list_items(soup)
 
     style_css = load_style_css(style_preset)
     if style_css:
