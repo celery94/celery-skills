@@ -1,6 +1,6 @@
 # Cover Prompt Template
 
-创建文章封面时，先用这个模板生成**封面 brief**和第一轮 prompt，再调用 `imagegen`。`azure-image-gen` 只作为明确回退路径。
+创建文章封面时，先用这个模板生成**封面 brief**和第一轮 prompt，再选择可用的图像生成 / 编辑技能执行。默认不要在这里预设某个固定 backend；只有用户明确要求 Azure 时才点名 `azure-image-gen`。
 
 不要默认“一次生成 = 最终封面”。先确认主题、摘要弧线、主体、构图和漫画方向是否成立，再根据问题做一次定向编辑或重生。
 
@@ -105,24 +105,17 @@
 - 不要把“manga / comic”理解成角色海报；先满足“摘要弧线清楚、主体明确、信息块可读”
 - `architecture` 与 `research` 类型可以使用漫画分镜或 callout，但不要做成真实系统图、真实仪表盘或论文图表截图
 
-## 5. 默认生图后端
+## 5. 选择生图技能
 
-优先使用 `imagegen`：
-
-- 用内置 `image_gen` 工具生成第一轮封面
+- 默认保持 backend-agnostic：根据当前环境里**可用**的图像生成 / 编辑技能完成封面，不要把模板写死到某一个特定生成器
 - 封面默认是宽图，prompt 里写明 `wide cover illustration, aspect ratio 2.35:1`
-- 如果工具输出在 `$CODEX_HOME/generated_images/...`，最终选中后移动或复制到 `src/assets/{ID}/01-cover.{ext}`
-- 不要让 `ogImage`、正文图片引用或微信封面引用默认生成目录
+- 如果所选工具先把图片输出到临时目录、默认目录或中间路径，最终选中后移动或复制到 `src/assets/{ID}/01-cover.{ext}`
+- 不要让 `ogImage`、正文图片引用或微信封面引用继续指向临时生成目录
 - 如果第一轮主题对但细节有问题，优先编辑或定向重生一次；每轮只改 1-3 个明确问题
 - 如果第一轮主题就不对，回到 brief，至少改“摘要角度 / 主隐喻 / 构图方式”中的两项后重新生成
+- 如果用户明确要求 Azure / `azure-image-gen` / Azure OpenAI，必须尊重该要求
 
-只有在这些情况下回退到 `azure-image-gen`：
-
-- `imagegen` 明显不可用
-- `imagegen` 连续失败，且失败不是 prompt 可修正的问题
-- 用户明确要求 Azure / `azure-image-gen` / Azure OpenAI
-
-Azure 回退参数：
+仅在使用 `azure-image-gen` 时，参考这些参数：
 
 - 草图阶段：`size 1504x640`，`quality low`
 - 终稿阶段：`size 2256x960`，`quality medium`

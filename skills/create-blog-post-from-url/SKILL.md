@@ -195,9 +195,9 @@ description: 从给定 URL 抽取信息并生成新的博客 Markdown 文章、�
 
 - 默认生成一张文章封面，并把最终选定文件保存到 `src/assets/{ID}/01-cover.{ext}`
 - 如果用户明确说不要封面、不要生成图片或只保留正文图片，跳过封面生成，不写 `ogImage`
-- 默认优先使用 **imagegen** 技能生成封面；只有在 `imagegen` 明显不可用、连续失败，或用户明确要求 Azure 时，才回退到 `azure-image-gen`
-- 使用 `imagegen` 时，先生成预览图，再把最终选定图移动或复制到 `src/assets/{ID}/01-cover.{ext}`；不得让 `ogImage`、正文或微信封面引用仍指向 `$CODEX_HOME/generated_images/...`
-- 如果回退到 `azure-image-gen`，默认把封面输出到 `src/assets/{ID}/01-cover.png` 作为原始目标路径；如果后处理改写成 `.jpg` 或 `.webp`，以后处理后的**最终实际路径**为准
+- 封面生成流程默认**不指定某个固定图像生成 backend**；重点是先完成封面 brief、产出合格草图、再把最终选中图落盘到 `src/assets/{ID}/01-cover.{ext}`
+- 如果所选图像技能先输出到临时目录、默认目录或中间文件，最终都要移动或复制到 `src/assets/{ID}/01-cover.{ext}`；不得让 `ogImage`、正文或微信封面引用仍指向临时生成路径
+- 如果用户明确要求 Azure / `azure-image-gen` / Azure OpenAI，必须尊重该要求；此时以后处理后的**最终实际路径**和扩展名为准（可能是 `.png`、`.jpg` 或 `.webp`）
 - 无论使用哪个后端，都要同步更新正文引用、`ogImage` 和微信封面路径
 - 封面用于表达主题，不用于伪造证据
 - 不得生成会让人误以为是真实产品截图、数据图或架构图的图片
@@ -226,7 +226,7 @@ description: 从给定 URL 抽取信息并生成新的博客 Markdown 文章、�
 - 封面默认是宽图，目标比例为 2.35:1；如果工具不能精确指定尺寸，也要在 prompt 中明确 `wide cover illustration, aspect ratio 2.35:1`
 - 不要依赖图中长文字表达主题；封面标题仍由博客页面负责，图中只允许少量中文短标签 / 数字承担 infographic 导航作用，不要混入整句英文
 - 如果生成结果把画面带往“海报字样 / UI 截图 / dashboard / 假终端 / 假图表”，立刻收紧 prompt 后重生或编辑，不要接受
-- 回退到 `azure-image-gen` 时才使用其参数规则：草图优先 `1504x640` / `quality low`，终稿优先 `2256x960` / `quality medium`，`background` 只用 `auto` 或 `opaque`
+- 如果用户明确要求 `azure-image-gen`，再使用它的参数规则：草图优先 `1504x640` / `quality low`，终稿优先 `2256x960` / `quality medium`，`background` 只用 `auto` 或 `opaque`
 
 ### 封面图验收标准
 

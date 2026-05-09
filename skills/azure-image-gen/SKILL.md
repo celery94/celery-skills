@@ -1,20 +1,21 @@
 ---
 name: azure-image-gen
-description: "Generate or edit images using an Azure OpenAI gpt-image-2 deployment. Use when the user asks for Azure-hosted GPT Image generation, inpainting, or reference-image workflows. Supports modern size strings, quality/background controls, and optional blog-friendly post-processing."
+description: "Generate or edit images for new-image, inpainting, and reference-image workflows. Use when the user needs a general image generation/editing skill, especially when Azure-backed output is acceptable or explicitly requested. Supports modern size strings, quality/background controls, and optional post-processing."
 ---
 
-# Azure OpenAI GPT Image Generation and Editing
+# Image Generation and Editing
 
-Generate or edit images using an Azure OpenAI `gpt-image-2` deployment with optional blog-cover post-processing.
+Use this skill as a general image generation and editing option for new-image creation, inpainting, and reference-image workflows. The current bundled script implementation runs on Azure OpenAI `gpt-image-2`, with optional post-processing for blog-friendly outputs.
 
 ## When to Use This Skill
 
-- User asks to generate an image via **Azure OpenAI**, **gpt-image-2**, or another Azure-hosted GPT Image deployment
-- User wants to **edit** an existing image with Azure, including mask-based inpainting
-- User wants to create a new image from one or more **reference images** on Azure
-- User already has an Azure OpenAI endpoint / deployment and wants to use the Images API directly
+- User needs to **generate** a new image from a text prompt
+- User needs to **edit** an existing image, including mask-based inpainting
+- User wants to create a new image from one or more **reference images**
+- User explicitly asks for **Azure OpenAI**, **gpt-image-2**, or another Azure-hosted GPT Image deployment
+- User already has an Azure OpenAI endpoint / deployment and wants to use the bundled script directly
 
-**Not for** OpenAI Responses API tool orchestration, OpenRouter image generation, or non-Azure providers. Use the more appropriate skill for those flows.
+**Current backend**: the bundled script is Azure-specific. If the user needs another provider, another tool should be used instead.
 
 ## Prerequisites
 
@@ -71,7 +72,7 @@ python .agents/skills/azure-image-gen/scripts/azure_generate_image.py \
    python .agents/skills/azure-image-gen/scripts/azure_generate_image.py "<prompt>" [options]
    ```
 4. **Run the script** and note the printed final file path.
-5. **Preserve or move the output** as needed. Use `--skip-post-process` when the user wants the raw API output instead of the default blog-cover optimization.
+5. **Preserve or move the output** as needed. Use `--skip-post-process` when the user wants the raw API output instead of the default post-processing flow.
 
 ## CLI Reference
 
@@ -120,7 +121,7 @@ python .agents/skills/azure-image-gen/scripts/azure_generate_image.py "Compose a
 
 ## Post-Processing
 
-By default, the script keeps the repository's existing blog-cover optimization flow:
+By default, the script keeps the repository's existing post-processing flow:
 
 1. **Resizes** to a maximum width of **500 px**
 2. **Compresses** toward ~200 KB

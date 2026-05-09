@@ -4,11 +4,11 @@
     {
       "id": 1,
       "prompt": "请把这篇文章改写成一篇中文博客并生成封面，然后发布到微信公众号草稿箱：https://www.anthropic.com/engineering/building-effective-agents",
-      "expected_output": "会先用 Chrome DevTools MCP 抓取正文并形成结构化笔记，再生成中文 Markdown 博客。封面阶段默认读取 `references/cover-prompt-template.md`，创建 `src/assets/{ID}/cover-brief.json`，先把文章压成单张宽封面的 infographic storytelling summary：记录 `summary_angle`、`narrative_flow`、`information_blocks`、`comic_style` 和 `comic_style_reason`，优先调用 `imagegen` 生成宽封面，把最终选中图保存为 `src/assets/{ID}/01-cover.{ext}`，并把 `ogImage` 与 `wechat-draft` 的 `cover-image` 都指向这个最终实际路径。",
+      "expected_output": "会先用 Chrome DevTools MCP 抓取正文并形成结构化笔记，再生成中文 Markdown 博客。封面阶段默认读取 `references/cover-prompt-template.md`，创建 `src/assets/{ID}/cover-brief.json`，先把文章压成单张宽封面的 infographic storytelling summary：记录 `summary_angle`、`narrative_flow`、`information_blocks`、`comic_style` 和 `comic_style_reason`，再用可用的图像生成 / 编辑技能完成封面，把最终选中图保存为 `src/assets/{ID}/01-cover.{ext}`，并把 `ogImage` 与 `wechat-draft` 的 `cover-image` 都指向这个最终实际路径。",
       "files": [],
       "assertions": [
         {
-          "text": "Cover generation uses `imagegen` as the default backend, not `azure-image-gen`."
+          "text": "Cover generation stays backend-agnostic by default instead of hardcoding a specific image-generation skill."
         },
         {
           "text": "The workflow creates or describes a cover brief before writing the final image prompt."
@@ -47,11 +47,11 @@
     {
       "id": 3,
       "prompt": "请用 Azure OpenAI 生成封面，把这篇英文教程改写成中文博客并推到微信草稿箱，封面用美漫信息图风格：https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/dall-e",
-      "expected_output": "会尊重用户明确指定 Azure 和美漫风格的要求，在封面阶段走 `azure-image-gen` 回退路径，并把 `comic_style` 设为 `american-comic`。仍然先生成 `cover-brief.json`，按模板构造单张宽封面的 infographic-story prompt，并把 Azure 脚本最终输出的实际文件路径（可能是 `.png`、`.jpg` 或 `.webp`）同步到 Markdown `ogImage` 和 `wechat-draft` 的 `cover-image`。",
+      "expected_output": "会尊重用户明确指定 Azure 和美漫风格的要求，在封面阶段使用 `azure-image-gen`，并把 `comic_style` 设为 `american-comic`。仍然先生成 `cover-brief.json`，按模板构造单张宽封面的 infographic-story prompt，并把 Azure 脚本最终输出的实际文件路径（可能是 `.png`、`.jpg` 或 `.webp`）同步到 Markdown `ogImage` 和 `wechat-draft` 的 `cover-image`。",
       "files": [],
       "assertions": [
         {
-          "text": "Explicit Azure preference overrides the default `imagegen` backend."
+          "text": "An explicit Azure preference is honored for cover generation even though the default flow is backend-agnostic."
         },
         {
           "text": "An explicit comic-style request overrides the auto-selection rule."
@@ -87,11 +87,11 @@
     {
       "id": 5,
       "prompt": "只把这个链接写成博客，不要生成封面，也不要发微信：https://example.com/short-note",
-      "expected_output": "会尊重用户明确的范围限制：仍然抓取 URL、生成中文 Markdown、写入 frontmatter 和参考链接，但跳过 `imagegen` / `azure-image-gen` 封面生成，不写 `ogImage`，也不调用 `wechat-draft`。",
+      "expected_output": "会尊重用户明确的范围限制：仍然抓取 URL、生成中文 Markdown、写入 frontmatter 和参考链接，但跳过封面生成，不写 `ogImage`，也不调用 `wechat-draft`。",
       "files": [],
       "assertions": [
         {
-          "text": "The explicit no-cover request prevents any image generation backend from being invoked."
+          "text": "The explicit no-cover request prevents any image-generation skill from being invoked."
         },
         {
           "text": "The explicit no-WeChat request prevents `wechat-draft` from being invoked."
