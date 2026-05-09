@@ -2,7 +2,7 @@
 
 创建文章封面时，先用这个模板生成**封面 brief**和第一轮 prompt，再选择可用的图像生成 / 编辑技能执行。默认不要在这里预设某个固定 backend；只有用户明确要求 Azure 时才点名 `azure-image-gen`。
 
-不要默认“一次生成 = 最终封面”。先确认主题、摘要弧线、主体、构图和漫画方向是否成立，再根据问题做一次定向编辑或重生。
+不要默认“一次生成 = 最终封面”。先确认主题、摘要弧线、主体、构图和选定随机风格是否成立，再根据问题做一次定向编辑或重生。
 
 ## 1. 先判断封面类型
 
@@ -47,9 +47,11 @@
   "primary_subject": "画面里最重要的 1 个主体",
   "subject_action": "主体正在做什么，或处于什么关系里",
   "composition": "居中主物体 / 左右对照 / 斜向推进 / 等距空间 / 单点聚焦",
-  "style_direction": "按类型映射表填写",
-  "comic_style": "auto | japanese-manga | american-comic",
-  "comic_style_reason": "为什么选这个漫画叙事方向",
+  "base_style": "按类型映射表填写",
+  "selected_style": "用户指定风格，或从 40 项风格池随机选择的风格名称",
+  "selected_style_prompt_descriptor": "用于生图 prompt 的安全描述词，不要求复刻品牌、工作室或艺术家",
+  "selected_style_reason": "为什么本篇选择这个风格；随机选择时写明是随机选中",
+  "style_safety_note": "如果风格名强指向品牌、工作室、作者或在世艺术家，说明已改写为非仿冒描述",
   "allowed_visible_text": ["默认 1-3 个中文短标签或数字；确有必要时最多 4 个"],
   "color_palette": ["2-4 个主色"],
   "avoid": ["和主题无关、但模型容易乱加的东西"],
@@ -79,33 +81,70 @@
 | `analysis` | conceptual editorial illustration | 一个核心冲突或对照关系 | 左右对照、拉扯或边界式构图 | 有判断力，但不煽情 |
 | `research` | abstract technical concept art | 一个机制或结构主意象 | 单点主结构 + 少量流动辅助线索 | 精确、克制、少人物 |
 
-## 4. 漫画叙事方向
+## 4. 随机风格池
 
-封面的**最终落地风格**必须明确是 `japanese-manga` 或 `american-comic` 之一；不要最后退回普通 editorial illustration、产品广告图或抽象科技氛围图。
+每篇文章在动笔前只确定 1 个 `selected_style`：用户明确指定时用用户指定；否则从下表 40 项里随机选 1 项。文章表达、封面 brief、封面 prompt 和图片验收都使用同一个风格方向。
 
-### 4.1 选择规则
+生成图片时不要直接要求“模仿某品牌 / 某工作室 / 某艺术家”。`selected_style` 可以记录原清单名称，`selected_style_prompt_descriptor` 必须使用下表的安全描述。
 
-1. 用户明确指定“日漫 / manga / japanese-manga”时，直接使用 `japanese-manga`
-2. 用户明确指定“美漫 / american-comic / comic-book”时，直接使用 `american-comic`
-3. 用户未指定时，按下面规则自动选择：
-   - `tutorial` / `release`：默认 `japanese-manga`
-   - `analysis` / `research`：默认 `american-comic`
-   - `architecture`：如果 `narrative_flow` 是流程推进、分层展开、左到右 pipeline，则选 `japanese-manga`；如果主叙事是冲突、对照、判断，则选 `american-comic`
-4. 仍然模糊时，用这个 tie-breaker：**需要“顺着看完 2-4 个步骤/节点”时选 `japanese-manga`；否则选 `american-comic`**
-5. 每次自动选择都要把原因写进 `comic_style_reason`
+| selected_style | selected_style_prompt_descriptor |
+|---|---|
+| 日漫少年风 | energetic shonen-inspired manga look, clean ink lines, dynamic poses, readable action rhythm, bright restrained color accents |
+| 日漫少女风 | soft shojo-inspired manga look, elegant linework, expressive faces, gentle decorative details, luminous pastel accents |
+| 青年写实风 | mature realistic comic illustration, grounded anatomy, restrained expressions, cinematic everyday lighting, detailed but readable scenes |
+| 治愈日常风 | cozy slice-of-life illustration, warm natural light, soft domestic details, calm pacing, gentle hand-drawn texture |
+| 热血战斗风 | high-energy battle comic look, strong silhouettes, speed lines, impact framing, bold contrast without excessive clutter |
+| 校园恋爱风 | youthful campus romance illustration, clean school-life setting, soft backlight, subtle emotional gestures, fresh color palette |
+| 韩漫条漫风 | polished vertical-webtoon-inspired rendering adapted to a wide cover, clean gradients, sharp character shapes, glossy color blocks |
+| 国漫二次元风 | contemporary Chinese anime-comic illustration, crisp linework, ornate but controlled details, vibrant fantasy-tech color accents |
+| 港漫武侠风 | bold martial-arts comic look, expressive ink strokes, dramatic stances, gritty texture, strong motion arcs |
+| 美漫超级英雄风 | American superhero-comic energy, bold outlines, halftone texture, dramatic perspective, high-contrast color blocking |
+| 欧漫清线风 | European clear-line comic style, precise outlines, flat readable colors, tidy environments, restrained humor and detail |
+| 赛博朋克风 | cyberpunk comic mood, neon accents, rain-slick surfaces, dense urban tech atmosphere, controlled purple-blue usage |
+| 蒸汽朋克风 | steampunk adventure illustration, brass mechanisms, gears, goggles, warm industrial light, handcrafted machinery |
+| 黑暗奇幻风 | dark fantasy illustration, gothic silhouettes, ancient textures, moody rim light, restrained magical atmosphere |
+| 科幻机甲风 | science-fiction mecha concept illustration, mechanical forms, hard-surface details, cockpit-scale cues, cool industrial palette |
+| 水彩漫画风 | watercolor comic illustration, translucent washes, visible paper texture, soft edges, light ink structure |
+| 厚涂插画风 | painterly digital illustration, rich brushwork, volumetric lighting, strong focal contrast, textured color masses |
+| 极简线稿风 | minimalist line-art illustration, sparse clean strokes, ample negative space, precise symbolic objects, limited accent color |
+| 黑白版画风 | black-and-white printmaking look, carved textures, bold shadows, high contrast, poster-like but no title text |
+| Q版 Chibi 风 | chibi character illustration, small cute proportions, simplified expressions, playful shapes, clear infographic readability |
+| 美式卡通风 | American cartoon illustration, elastic shapes, clear expressions, bold color fields, light comedic timing |
+| 吉卜力动画风 | warm hand-drawn animation feeling, natural environments, gentle fantasy everyday mood, soft painterly backgrounds, no studio imitation |
+| 迪士尼动画风 | bright family-animation feeling, rounded character shapes, clear emotional acting, polished color and lighting, no studio imitation |
+| 独立漫画风 | indie comic illustration, personal hand-drawn marks, muted palette, imperfect line texture, intimate editorial feeling |
+| 像素复古风 | retro pixel-art inspired illustration, blocky forms, limited palette, old game composition cues, readable wide layout |
+| 悬疑惊悚风 | suspense thriller comic mood, low-key lighting, sharp shadows, uneasy framing, controlled tension without gore |
+| 废土末日风 | post-apocalyptic wasteland illustration, weathered materials, dusty atmosphere, survival objects, desaturated contrast |
+| 洛丽塔幻想风 | ornate fantasy fashion illustration, lace-like detail, dollhouse elegance, soft magical palette, controlled decorative density |
+| 中国古风仙侠风 | Chinese xianxia fantasy illustration, flowing robes, ink-wash atmosphere, mountains and clouds, elegant magical motion |
+| 新海诚光影风 | transparent blue skies, dramatic backlight, detailed clouds, youthful cinematic lighting, rain and reflection details, no artist imitation |
+| 高对比电影风 | high-contrast cinematic illustration, strong key light, deep shadows, wide-screen composition, dramatic but realistic color grading |
+| 涂鸦街头风 | street-graffiti comic style, spray-paint texture, bold outlines, urban wall energy, vivid but controlled color clashes |
+| 低饱和文艺风 | low-saturation arthouse illustration, quiet composition, subtle grain, muted colors, reflective emotional tone |
+| 90年代复古动画风 | 1990s retro animation look, cel-shaded color, analog grain, bold simple backgrounds, nostalgic broadcast texture |
+| 游戏原画风 | game concept art illustration, clear hero object, readable environment storytelling, polished lighting, production-art detail |
+| 动态分镜电影风 | dynamic cinematic storyboard style, sequential panels, camera-motion feeling, strong cuts, clear narrative beats |
+| 手绘铅笔草稿风 | hand-drawn pencil sketch look, visible construction lines, graphite texture, loose but intentional composition |
+| 彩铅绘本风 | colored-pencil picture-book illustration, tactile strokes, gentle palette, warm narrative objects, soft educational tone |
+| 儿童童话风 | children's fairy-tale illustration, simple magical forms, friendly proportions, bright storybook palette, safe wonder |
+| 暗黑哥特风 | dark gothic illustration, pointed arches, lace shadows, candlelit contrast, ornate black shapes, restrained horror mood |
 
-### 4.2 两种方向的含义
+## 5. 风格使用规则
 
-- `japanese-manga`：分镜化、墨线、速度线、黑白或有限色漫画叙事；强调节奏、流程、推进感。**不是**萌系角色海报，也不是泛“动漫头像”
-- `american-comic`：粗轮廓、halftone、graphic-novel 式张力、强对照与编辑感；强调判断、冲突、结论。**不是**超级英雄电影海报
+- `selected_style` 必须先于正文写作确定；不要写完文章或生成封面时才临时换风格
+- 未指定风格时必须随机选择，不按文章类型固定映射
+- 用户明确指定清单内风格时，直接使用该风格；用户指定清单外风格时，也要转成安全描述词并记录原因
+- 文章正文只轻量吸收风格的叙事节奏和比喻，不改变事实密度、步骤完整度和技术准确性
+- 封面 prompt 必须同时包含 `base_style` 与 `selected_style_prompt_descriptor`，前者保证文章类型清晰，后者保证视觉风格一致
+- 强指向品牌、工作室、作者或在世艺术家的名称只允许出现在 `selected_style` 记录里；最终 prompt 使用描述词，不写“in the style of / 模仿 / 复刻”
 
 额外规则：
 
-- 不要默认写 `pixel-art`
-- 不要把“manga / comic”理解成角色海报；先满足“摘要弧线清楚、主体明确、信息块可读”
+- 不要把风格词堆满 prompt；先满足“摘要弧线清楚、主体明确、信息块可读”
 - `architecture` 与 `research` 类型可以使用漫画分镜或 callout，但不要做成真实系统图、真实仪表盘或论文图表截图
 
-## 5. 选择生图技能
+## 6. 选择生图技能
 
 - 默认保持 backend-agnostic：根据当前环境里**可用**的图像生成 / 编辑技能完成封面，不要把模板写死到某一个特定生成器
 - 封面默认是宽图，prompt 里写明 `wide cover illustration, aspect ratio 2.35:1`
@@ -122,18 +161,18 @@
 - `background` 只用 `auto` 或 `opaque`
 - 当前脚本即使传 `--n > 1` 也只保存第一张，所以多方案探索要分多次生成或改走编辑流
 
-## 6. 允许信息与统一禁令
+## 7. 允许信息与统一禁令
 
 每个 prompt 都必须同时说明**允许什么**和**禁止什么**，避免“信息图摘要”和“防伪造限制”互相打架。
 
-### 6.1 允许的可见信息
+### 7.1 允许的可见信息
 
 - 默认最多 `1-3` 个中文短标签 / 数字 chip，确有必要时最多 `4` 个，全部来自 `information_blocks`
 - 每个标签默认 `<= 6` 个汉字；或 `1` 个必要的产品 / 模型名
 - 允许 `1/2/3`、`①②③`、原文真实数字、比例、年份
 - 允许箭头、panel gutter、编号贴片、callout chip、轻量对照框
 
-### 6.2 仍然禁止的内容
+### 7.2 仍然禁止的内容
 
 - poster title / hero slogan / 长段说明文字
 - 英文口号、拟声词、无关 SFX、整句英文标签
@@ -160,9 +199,9 @@
 
 如果第一轮结果里出现这些元素，优先在第二轮 prompt 里明确写 `remove / no / avoid`，不要寄希望于模型自己悟出来。
 
-## 7. Prompt 骨架
+## 8. Prompt 骨架
 
-### 7.1 第一轮：草图生成 prompt
+### 8.1 第一轮：草图生成 prompt
 
 用下面这套结构输出**第一轮草图 prompt**：
 
@@ -182,14 +221,14 @@ Information blocks:
 Main metaphor: {封面主隐喻}.
 Subject: {主视觉主体}, {主体动作}.
 Composition/framing: {构图方式}. Prefer horizontal or radial storytelling that stays legible in a wide cover.
-Style/medium: final style must be {漫画叙事方向}, interpreted through {基础风格}. Stylized, polished, editorial, visually strong, and clearly readable as an infographic-style summary cover.
+Style/medium: combine {基础风格} with the selected visual style descriptor: {selected_style_prompt_descriptor}. Stylized, polished, editorial, visually strong, and clearly readable as an infographic-style summary cover. Do not imitate a specific brand, studio, or living artist.
 Color palette: {色彩限制}.
 Visible text policy: allow only 1-3 short Chinese labels or number chips by default, and no more than 4 when strictly necessary, all sourced from the information blocks. Each label <= 6 Chinese characters or one required product/model name. No poster title, no long sentences, no English slogans, no fake UI labels, no fake chart axes, no fake architecture node names.
 Constraints: no watermark, no prompt residue, no screenshots, no dashboards, no fake diagrams, no fake charts, no fake terminal output, no fabricated metrics, no unrelated icon collage, no decorative clutter.
 Avoid: {禁用元素}.
 ```
 
-### 7.2 第二轮：编辑 / 精修 prompt
+### 8.2 第二轮：编辑 / 精修 prompt
 
 当第一轮已经有可用方向，但需要修主体、背景、风格、误生成元素时，优先用这套结构写**编辑或定向重生 prompt**：
 
@@ -208,7 +247,7 @@ Change only these points:
 - {第二轮修正点 2}
 - {第二轮修正点 3}
 
-Make the image feel more like {基础风格} with {漫画叙事方向}. Preserve one clear focal subject and 2-4 supporting narrative beats in a wide 2.35:1 frame.
+Make the image feel more like {基础风格} combined with this selected visual style descriptor: {selected_style_prompt_descriptor}. Preserve one clear focal subject and 2-4 supporting narrative beats in a wide 2.35:1 frame. Do not imitate a specific brand, studio, or living artist.
 Primary subject should remain: {主视觉主体}, {主体动作}.
 Simplify the background so that only {背景元素} remains as supporting context.
 Color palette: {色彩限制}.
@@ -218,16 +257,16 @@ Remove any watermark, prompt residue, screenshots, dashboards, fake diagrams, fa
 Avoid {禁用元素}.
 ```
 
-### 7.3 何时用参考图
+### 8.3 何时用参考图
 
 - 如果已经有**允许复用的本地图片**，而且它能明确帮助模型抓住主体关系、空间结构或关键对象，可以把它作为参考图
 - 第三方版权海报、品牌 KV、原站营销插画、需要精确复刻的产品界面不能作为像素级临摹对象
 - 如果参考图只是原网页截图，要防止最终图看起来像“网页截图换滤镜”
 - 如果第一轮主题就不对，不要强行编辑；回到 brief 重写
 
-## 8. 使用要求
+## 9. 使用要求
 
-- prompt 里必须同时包含“主题”“摘要角度”“信息块”“主体”“动作”“构图”“基础风格”“漫画方向”“禁令”
+- prompt 里必须同时包含“主题”“摘要角度”“信息块”“主体”“动作”“构图”“基础风格”“selected_style_prompt_descriptor”“禁令”
 - 宽封面必须保持 `1` 个主焦点 + `2-4` 个叙事信息块；不要退化成多页拼贴，也不要变成纵向长海报
 - `visible_label` 和 `numeric_fact` 都必须来自 `information_blocks`；如果找不到来源依据，就删掉，不要硬加
 - `architecture` 类型可以画抽象节点、连接线和分镜，但不能伪造真实系统图、模块名、坐标轴或仪表盘
@@ -250,148 +289,61 @@ Avoid {禁用元素}.
 - 不像真实产品截图、真实架构图、真实 dashboard 或网页截图
 - 一眼能读出这是在**概括文章内容**，而不是泛科技氛围图
 
-## 9. 示例
+## 10. 示例
 
-### 示例 1：教程类（自动选择 `japanese-manga`）
+### 示例 1：教程类（随机选中 `日漫少年风`）
 
-输入槽位：
+关键槽位：
 
-- `文章标题`：在 Claude Code 里直接调用 OpenAI Codex：codex-plugin-cc 上手指南
 - `文章类型`：`tutorial`
-- `核心主题`：在 Claude Code 中安装和使用 OpenAI Codex 插件
-- `读者收获`：快速理解安装流程和核心命令
 - `摘要角度`：把“装上插件 -> 配好命令 -> 跑通工作流”压成一张封面
-- `叙事弧线`：`3-beat process`
-- `信息块`：
-  1. `step`：装插件，标签 `装插件`
-  2. `step`：补配置，标签 `配命令`
-  3. `takeaway`：直接在工作台调用 Codex，标签 `跑起来`
-- `封面主隐喻`：一个开发者工作台上，插件模块被接入主流程并点亮
-- `主视觉主体`：终端工作台与插件模块
-- `主体动作`：插件模块插入侧边槽位后，三段流程依次点亮
-- `构图方式`：单点聚焦，左到右分镜推进
-- `背景元素`：少量命令流线、一个简化工具徽记、柔和界面轮廓
+- `信息块`：`装插件` / `配命令` / `跑起来`
 - `基础风格`：editorial technical illustration
-- `漫画方向`：`japanese-manga`
-- `色彩限制`：charcoal, soft teal, warm orange, off-white
-- `禁用元素`：floating robots, neon city, dense code rain
+- `selected_style`：`日漫少年风`
+- `selected_style_prompt_descriptor`：energetic shonen-inspired manga look, clean ink lines, dynamic poses, readable action rhythm, bright restrained color accents
+- `selected_style_reason`：用户未指定风格，本篇从风格池随机选中；教程流程适合用有推进感的动作节奏表达
+- `style_safety_note`：清单风格为泛类型描述，不涉及品牌、工作室或艺术家复刻
 
-输出 prompt：
+Prompt 片段：
 
 ```text
-Use case: infographic-story
-Asset type: wide cover infographic illustration for a Chinese tech blog article
-Primary request: Create a wide cinematic infographic-story cover illustration that summarizes the article. Theme: installing and using an OpenAI Codex plugin inside Claude Code. The reader should quickly feel that this is a practical hands-on workflow they can follow immediately.
-
-Summary angle: compress the whole article into one cover that shows install, configure, and run as a clean three-beat workflow.
-Narrative flow: 3-beat process. In a 2.35:1 frame, keep one dominant focal subject and 3 supporting narrative beats. Each beat must map to the article's information blocks rather than generic decoration.
-Information blocks:
-- step: install the plugin, visible label "装插件"
-- step: wire the key commands and settings, visible label "配命令"
-- takeaway: run the workflow from the workstation, visible label "跑起来"
-
-Main metaphor: a developer workstation where one plugin module snaps into the main workflow and lights up the whole path.
-Subject: a terminal-centric workstation with a plugin module, the module sliding into a side slot while a three-beat sequence lights up from left to right.
-Composition/framing: single focal point with left-to-right panelized storytelling. Prefer horizontal storytelling that stays legible in a wide cover.
-Style/medium: final style must be japanese-manga, interpreted through editorial technical illustration. Stylized, polished, editorial, visually strong, and clearly readable as an infographic-style summary cover.
-Color palette: charcoal, soft teal, warm orange, off-white.
-Visible text policy: allow at most 3 short Chinese labels sourced from the information blocks, each label <= 6 Chinese characters. No poster title, no long sentences, no English slogans, no fake UI labels, no fake chart axes, no fake architecture node names.
-Constraints: no watermark, no prompt residue, no screenshots, no dashboards, no fake diagrams, no fake charts, no fake terminal output, no fabricated metrics, no unrelated icon collage, no decorative clutter.
-Avoid: floating robots, neon city, dense code rain.
+Style/medium: combine editorial technical illustration with the selected visual style descriptor: energetic shonen-inspired manga look, clean ink lines, dynamic poses, readable action rhythm, bright restrained color accents. Stylized, polished, editorial, visually strong, and clearly readable as an infographic-style summary cover. Do not imitate a specific brand, studio, or living artist.
 ```
 
-### 示例 2：架构 / 工作流类（按流程自动选择 `japanese-manga`）
+### 示例 2：架构类（随机选中 `科幻机甲风`）
 
-输入槽位：
+关键槽位：
 
-- `文章标题`：用 GitHub Copilot SDK 在 C# 中构建多智能体代码分析系统
 - `文章类型`：`architecture`
-- `核心主题`：多个专职 agent 组成顺序执行的代码分析流水线
-- `读者收获`：理解多 agent 如何分工协作并汇总结果
 - `摘要角度`：把“采集 -> 分析 -> 汇总”做成一张可读的工作流封面
-- `叙事弧线`：`3-beat process`
-- `信息块`：
-  1. `step`：采集代码上下文，标签 `采集`
-  2. `step`：分工分析，标签 `分析`
-  3. `takeaway`：汇总成报告，标签 `汇总`
-- `封面主隐喻`：一个模块化分析工厂，多个处理单元串联成流水线
-- `主视觉主体`：三个分析节点与一个汇总节点
-- `主体动作`：代码片段从左到右流经节点后汇总成报告
-- `构图方式`：等距空间，左到右层级推进
-- `背景元素`：少量连接线、结果卡片轮廓、简化数据流光带
+- `信息块`：`采集` / `分析` / `汇总`
 - `基础风格`：isometric conceptual systems scene
-- `漫画方向`：`japanese-manga`
-- `色彩限制`：deep navy, steel blue, amber, pale cyan
-- `禁用元素`：real dashboards, fake charts, hologram overload
+- `selected_style`：`科幻机甲风`
+- `selected_style_prompt_descriptor`：science-fiction mecha concept illustration, mechanical forms, hard-surface details, cockpit-scale cues, cool industrial palette
+- `selected_style_reason`：用户未指定风格，本篇从风格池随机选中；模块化流水线可以用机械结构强化分工关系
+- `style_safety_note`：使用泛科幻机甲描述，不引用具体作品或设计师
 
-输出 prompt：
+Prompt 片段：
 
 ```text
-Use case: infographic-story
-Asset type: wide cover infographic illustration for a Chinese tech blog article
-Primary request: Create a wide cinematic infographic-story cover illustration that summarizes the article. Theme: a sequential multi-agent code analysis pipeline built with GitHub Copilot SDK in C#. The reader should quickly feel how separate agents collaborate and merge their outputs into one report.
-
-Summary angle: compress the architecture article into one readable left-to-right workflow cover.
-Narrative flow: 3-beat process. In a 2.35:1 frame, keep one dominant focal subject and 3 supporting narrative beats.
-Information blocks:
-- step: gather the code context, visible label "采集"
-- step: specialize the analysis across dedicated agents, visible label "分析"
-- takeaway: merge the results into one report, visible label "汇总"
-
-Main metaphor: a modular analysis factory where specialized units form one clear pipeline.
-Subject: three distinct analysis nodes and one final synthesis node, with code fragments moving through them from left to right and becoming a finished report.
-Composition/framing: isometric scene with left-to-right staged progression. Prefer horizontal storytelling that stays legible in a wide cover.
-Style/medium: final style must be japanese-manga, interpreted through isometric conceptual systems scene. Stylized, polished, editorial, visually strong, and clearly readable as an infographic-style summary cover.
-Color palette: deep navy, steel blue, amber, pale cyan.
-Visible text policy: allow only the approved short Chinese labels from the brief, keep them minimal, and do not exceed 3 items in this cover. No poster title, no long sentences, no fake node names, no fake chart axes, no UI labels.
-Constraints: no watermark, no prompt residue, no screenshots, no dashboards, no fake diagrams, no fake charts, no fake terminal output, no fabricated metrics, no unrelated icon collage, no decorative clutter.
-Avoid: real dashboards, fake charts, hologram overload.
+Style/medium: combine isometric conceptual systems scene with the selected visual style descriptor: science-fiction mecha concept illustration, mechanical forms, hard-surface details, cockpit-scale cues, cool industrial palette. Stylized, polished, editorial, visually strong, and clearly readable as an infographic-style summary cover. Do not imitate a specific brand, studio, or living artist.
 ```
 
-### 示例 3：观点 / 分析类（自动选择 `american-comic`）
+### 示例 3：强指向风格（用户指定 `新海诚光影风`）
 
-输入槽位：
+关键槽位：
 
-- `文章标题`：GitHub Spec Kit：用规格说明驱动 AI 编程的开源工具包
 - `文章类型`：`analysis`
-- `核心主题`：用结构化规格约束 AI 编程过程，减少纯 prompt 驱动的混乱
-- `读者收获`：理解为什么 specification 比临时 prompt 更能稳定驱动实现
 - `摘要角度`：把“先写规格 -> 再交给 AI -> 返工更少”的判断做成强对照封面
-- `叙事弧线`：`conflict-to-resolution`
-- `信息块`：
-  1. `contrast`：碎片 prompt 容易漂移，标签 `先别乱写`
-  2. `mechanism`：规格蓝图提供边界，标签 `先写规格`
-  3. `takeaway`：实现更稳、返工更少，标签 `少返工`
-- `封面主隐喻`：一张清晰蓝图正在压住四散的草稿和碎片指令
-- `主视觉主体`：中央规格蓝图与周围散乱草稿
-- `主体动作`：蓝图向外施加秩序，把碎片收束成清晰路径
-- `构图方式`：中心主物体，四周轻微对照与收拢
-- `背景元素`：少量草稿纸边缘、路径线、被整理的碎片卡片
+- `信息块`：`先别乱写` / `先写规格` / `少返工`
 - `基础风格`：conceptual editorial illustration
-- `漫画方向`：`american-comic`
-- `色彩限制`：ink black, paper white, muted blue, restrained coral
-- `禁用元素`：robot mascots, floating code blocks everywhere, poster slogans
+- `selected_style`：`新海诚光影风`
+- `selected_style_prompt_descriptor`：transparent blue skies, dramatic backlight, detailed clouds, youthful cinematic lighting, rain and reflection details, no artist imitation
+- `selected_style_reason`：用户明确指定该风格，覆盖随机选择
+- `style_safety_note`：原风格名强指向在世作者，最终 prompt 只使用光影、天空、云层、反射等非仿冒描述
 
-输出 prompt：
+Prompt 片段：
 
 ```text
-Use case: infographic-story
-Asset type: wide cover infographic illustration for a Chinese tech blog article
-Primary request: Create a wide cinematic infographic-story cover illustration that summarizes the article. Theme: structured specifications bringing order to AI coding workflows that would otherwise drift under pure prompt-driven development. The reader should quickly feel that clear specs create control, alignment, and execution stability.
-
-Summary angle: turn the article into a strong editorial contrast between chaotic prompting and spec-driven execution.
-Narrative flow: conflict-to-resolution. In a 2.35:1 frame, keep one dominant focal subject and 3 supporting narrative beats.
-Information blocks:
-- contrast: fragmented prompting drifts, visible label "先别乱写"
-- mechanism: the specification defines the path, visible label "先写规格"
-- takeaway: steadier execution with less rework, visible label "少返工"
-
-Main metaphor: a precise blueprint pressing down on scattered drafts and fragmented instructions, forcing them into an ordered path.
-Subject: a central specification blueprint surrounded by loose sketch pages and fragmented instruction cards, the blueprint imposing structure outward.
-Composition/framing: centered main object with restrained surrounding contrast and inward convergence. Prefer wide editorial storytelling with readable contrast beats.
-Style/medium: final style must be american-comic, interpreted through conceptual editorial illustration. Stylized, polished, editorial, visually strong, and clearly readable as an infographic-style summary cover.
-Color palette: ink black, paper white, muted blue, restrained coral.
-Visible text policy: allow at most 3 short Chinese labels sourced from the information blocks. No poster title, no long sentences, no English slogans, no fake UI labels, no fake chart axes, no fake architecture node names.
-Constraints: no watermark, no prompt residue, no screenshots, no dashboards, no fake diagrams, no fake charts, no fake terminal output, no fabricated metrics, no unrelated icon collage, no decorative clutter.
-Avoid: robot mascots, floating code blocks everywhere, poster slogans.
+Style/medium: combine conceptual editorial illustration with the selected visual style descriptor: transparent blue skies, dramatic backlight, detailed clouds, youthful cinematic lighting, rain and reflection details, no artist imitation. Stylized, polished, editorial, visually strong, and clearly readable as an infographic-style summary cover. Do not imitate a specific brand, studio, or living artist.
 ```

@@ -99,6 +99,15 @@ description: 从给定 URL 抽取信息并生成新的博客 Markdown 文章、�
 
 ## 3. 写作要求
 
+### 随机风格选择
+
+- 每篇文章在动笔前先确定 `selected_style`：如果用户明确指定风格，使用用户指定；否则从 `references/cover-prompt-template.md` 的 40 项风格池中随机选择 1 项
+- `selected_style` 一篇文章只选一次，文章表达、封面 brief、封面 prompt、图片验收都使用同一个风格方向
+- 风格只影响叙事语气、视觉隐喻、配色、构图和图片 prompt；不得改变原文事实、技术判断、步骤、数字或引用关系
+- 文章正文仍保持中文技术博客的自然、可信、可落地表达，不要为了套风格写成小说、角色对白或营销文案
+- 用户明确说不要封面、不要生成图片或只保留正文图片时，跳过图片生成；但仍可在写作时记录并轻量遵循同一个 `selected_style`
+- 对强指向品牌、工作室、作者或特定在世艺术家的风格名称，只把原名记录在 brief 的 `selected_style`，生成 prompt 时必须使用 `selected_style_prompt_descriptor` 的非仿冒描述词，不要求复刻某个品牌、工作室或艺术家的画风
+
 ### 基础要求
 
 - 全文必须是中文，标题、摘要、正文、图片说明都要翻译
@@ -206,19 +215,15 @@ description: 从给定 URL 抽取信息并生成新的博客 Markdown 文章、�
 - 生成 brief 前，先从原文抽出：`1` 个主结论、`2-4` 个可视化信息块（步骤 / 证据 / 转折 / 对比）、以及它们各自对应的原文锚点；封面上的信息必须来自这些锚点，不能临场编造数字、标签或节点名
 - 宽封面里最多放 `2-4` 个信息块；超过这个数量，先压缩叙事，不要把封面做成难以辨认的小字长海报
 - 先判断封面类型，再按模板填写提示词槽位，保存 `src/assets/{ID}/cover-brief.json`，不要临场随手拼一段泛化描述
-- `cover-brief.json` 除了现有主题、主体、构图、风格字段外，还要记录 `summary_angle`、`narrative_flow`、`information_blocks`、`comic_style` 与 `comic_style_reason`
-- 封面的**最终视觉风格统一落在 `japanese-manga` 或 `american-comic` 两类之一**；不要最后又回到普通 editorial 插画、产品海报或抽象科技氛围图
-- 漫画叙事方向允许 `japanese-manga` 或 `american-comic`：
-  1. 用户明确指定日漫 / 美漫时，直接使用该风格
-  2. 未指定时自动选择：`tutorial` / `release` 默认 `japanese-manga`；`analysis` / `research` 默认 `american-comic`
-  3. `architecture` 类型按叙事弧线选：如果是流程 / 分层 / 左到右推进，选 `japanese-manga`；如果是冲突 / 判断 / 对照，选 `american-comic`
-  4. 每次自动选择都要把原因写进 `comic_style_reason`
-- 这里的 `japanese-manga` 指**分镜化、墨线、速度线、有限色或黑白漫画叙事**，不是默认做成萌系动漫海报；`american-comic` 指**粗轮廓、halftone、graphic-novel 式对照与张力**，不是超级英雄电影海报
+- `cover-brief.json` 除了现有主题、主体、构图、风格字段外，还要记录 `summary_angle`、`narrative_flow`、`information_blocks`、`selected_style`、`selected_style_prompt_descriptor`、`selected_style_reason` 与 `style_safety_note`
+- 封面的最终视觉风格使用写作前选定的 `selected_style`；不要退回普通 editorial 插画、产品海报、抽象科技氛围图，也不要改成另一个随机风格
+- `selected_style_prompt_descriptor` 必须来自 `references/cover-prompt-template.md` 的安全描述映射；如果用户指定了不在清单内的风格，也要先转成不仿冒特定品牌、工作室或艺术家的描述词
+- 每次随机或用户指定风格都要把选择原因写进 `selected_style_reason`，并在 `style_safety_note` 里说明是否做了安全改写
 - 允许少量可见文字，但只能是**来源可追溯的中文短标签 / 数字**：默认 `1-3` 处，确有必要时最多 `4` 处；每处不超过 `6` 个汉字，或 `1` 个必要的产品 / 模型名；允许序号 `1/2/3`、`①②③`、原文真实数字或百分比
 - 仍然禁止：封面主标题、长句说明、英文口号、假 UI 标签、假 dashboard、假图表坐标 / 图例、假终端输出、假架构节点名、伪造指标
 - 默认使用**封面 brief -> 草图 -> 验收 -> 精修/重生 -> 落盘**流程，而不是一次性生成后直接收工：
-  1. **封面 brief**：记录文章类型、核心主题、读者收获、主隐喻、主视觉主体、主体动作、构图、背景元素、风格、色彩、叙事摘要、信息块、漫画方向、禁用元素、参考素材策略和最终 prompt
-  2. **草图阶段**：先用纯文本 prompt 验证“主题、主隐喻、叙事信息块、漫画方向、构图”是否成立
+  1. **封面 brief**：记录文章类型、核心主题、读者收获、主隐喻、主视觉主体、主体动作、构图、背景元素、基础风格、选定随机风格、安全风格描述、色彩、叙事摘要、信息块、禁用元素、参考素材策略和最终 prompt
+  2. **草图阶段**：先用纯文本 prompt 验证“主题、主隐喻、叙事信息块、选定风格、构图”是否成立
   3. **精修阶段**：如果第一张已经接近目标，但细节、风格、背景、误生成元素还有问题，优先编辑或定向重生 1-2 轮；每轮只改 1-3 个明确问题
   4. **落盘阶段**：只把最终选定图作为 `01-cover.{ext}` 写入文章资源目录，丢弃的预览图不进入正文引用
 - 如果文章已经保留了**允许复用的本地素材**（例如你刚保存到当前文章资源目录中的步骤图、结构草图、结果图），而且这些素材确实能帮助模型抓住主题，可以把其中 1-2 张作为参考输入交给生图工具
