@@ -149,6 +149,60 @@
           "text": "The prompt allows only a small amount of Chinese labels and key numbers while still forbidding long titles and fake charts."
         }
       ]
+    },
+    {
+      "id": 8,
+      "prompt": "把这篇技术教程改写成适合微信公众号发布的中文文章，并生成封面后发草稿箱：https://example.com/devtool-automation-guide",
+      "expected_output": "会先完成公众号运营判断：该文服务 Aide Hub 的软件开发 / AI 助手定位，读者收益是学会一个可落地的方法，分发倾向偏收藏。正文仍保持教程写法，写清前提、步骤、结果验证和坑点；标题降低解释成本，使用技术对象加具体收益或适用场景；description 作为微信预览摘要控制在 80-120 字，并自然说明读者为什么值得点开。发布到微信前会加入克制的文末关注引导，说明 Aide Hub 会持续分享 AI 助手、开发工具和软件工程实践。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "The workflow performs a WeChat account-ops judgment before writing, including account positioning, reader takeaway, and distribution tendency."
+        },
+        {
+          "text": "The article title reduces explanation cost and combines a technical object with a concrete benefit or usage scenario."
+        },
+        {
+          "text": "The description is treated as a WeChat preview summary and stays useful without hype."
+        },
+        {
+          "text": "A natural WeChat follow prompt is included when the article is going to the WeChat draft box."
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "把这篇工具评测写成博客并发布到公众号草稿箱。可以顺便给我一个自动回复关键词建议，但不要承诺没有准备好的资料：https://example.com/ai-code-review-tool",
+      "expected_output": "会把文章识别为工具评测型，并判断其公众号分发倾向偏涨粉：重点写使用场景、替代方案、上手门槛和适用边界。可以在最终报告里给出自动回复关键词建议，例如“清单”或“工具”，但只有当正文实际产出了对应资源或用户提供了资源时，才把关键词和资源承诺写进文章。正文和文末引导不得承诺不存在的资料、源码、课程、社群、优惠或咨询服务。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Tool-review articles are guided toward scenarios, alternatives, onboarding cost, and boundaries rather than generic praise."
+        },
+        {
+          "text": "Keyword auto-reply suggestions may be reported separately without implying the account backend is configured."
+        },
+        {
+          "text": "The generated article does not promise resources, source code, courses, communities, discounts, or consulting that were not actually provided."
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "只把这篇趋势观点文章写成博客，不要发微信，也不要写成爆款公众号文：https://example.com/ai-agent-market-opinion",
+      "expected_output": "会尊重用户明确的范围限制：只生成中文博客，不调用 `wechat-draft`。仍会做轻量公众号运营判断来确认文章更偏观点评论型、读者收益是形成判断、分发倾向偏转发，但不会强行加入公众号文末关注模块，也不会把观点文章包装成夸张爆款。标题、摘要和正文保持自然技术博客表达，保留原文判断依据和适用边界。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "The explicit no-WeChat request prevents `wechat-draft` from being invoked and skips the WeChat follow module."
+        },
+        {
+          "text": "Opinion articles are not forced into hype-driven WeChat viral copy."
+        },
+        {
+          "text": "The article preserves source-grounded reasoning and boundaries instead of inventing claims."
+        }
+      ]
     }
   ]
 }
