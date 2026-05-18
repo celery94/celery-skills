@@ -403,6 +403,58 @@ def load_extra_css(extra_css_file: Optional[str]) -> str:
         return handle.read()
 
 
+def convert_lists_for_wechat(soup: BeautifulSoup) -> None:
+    """Convert ul/ol lists to styled <p> elements for WeChat compatibility.
+
+    Replaces each <li> with a <p> element prefixed by a bullet character (• for
+    <ul>, N. for <ol>), preserving all inner HTML.  Called after apply_inline_css
+    so that inline styles already computed on <li> are transferred to the new <p>.
+    """
+
+    def _depth(node: BeautifulSoup) -> int:
+        depth = 0
+        parent = node.parent
+        while parent is not None:
+            if getattr(parent, "name", None) in ("ul", "ol"):
+                depth += 1
+            parent = parent.parent
+        return depth
+
+    # Process deepest-nested lists first so inner <li> are already <p> when
+    # the outer list is processed.
+    all_lists = soup.find_all(["ul", "ol"])
+    all_lists.sort(key=_depth, reverse=True)
+
+    for lst in all_lists:
+        is_ol = lst.name == "ol"
+        items = lst.find_all("li", recursive=False)
+
+        if not items:
+            lst.decompose()
+            continue
+
+        for idx, li in enumerate(items, 1):
+            prefix = f"{idx}.\u2002" if is_ol else "\u2022\u2002"
+
+            # Inherit the inline style computed for <li>
+            li_style = li.get("style", "")
+
+            p = soup.new_tag("p")
+            if li_style:
+                p["style"] = li_style
+
+            # Prepend the bullet/number text node
+            p.append(prefix)
+
+            # Move all children of <li> into <p>
+            for child in list(li.children):
+                p.append(child.extract())
+
+            li.replace_with(p)
+
+        lst.unwrap()
+
+
 def build_styled_fragment(
     fragment_html: str, style_preset: str, extra_css: str
 ) -> str:
@@ -418,6 +470,9 @@ def build_styled_fragment(
         apply_inline_css(soup, style_css)
     if extra_css:
         apply_inline_css(soup, extra_css)
+
+    # Convert lists to WeChat-compatible <p> elements after CSS is inlined
+    convert_lists_for_wechat(soup)
 
     for style_tag in soup.find_all("style"):
         style_tag.decompose()
