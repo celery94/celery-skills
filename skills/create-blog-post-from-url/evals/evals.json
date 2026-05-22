@@ -24,6 +24,9 @@
         },
         {
           "text": "`ogImage` and the WeChat `cover-image` parameter reference the final cover path."
+        },
+        {
+          "text": "After WeChat draft publishing succeeds and returns `media_id`, the workflow commits and pushes only the generated blog post and assets."
         }
       ]
     },
@@ -67,6 +70,9 @@
         },
         {
           "text": "The final image path is propagated consistently to blog frontmatter and WeChat publishing."
+        },
+        {
+          "text": "After WeChat draft publishing succeeds, the workflow reports `media_id`, commit hash, and pushed branch."
         }
       ]
     },
@@ -107,6 +113,9 @@
         },
         {
           "text": "A selected style may still guide article expression lightly without triggering image generation."
+        },
+        {
+          "text": "The explicit no-WeChat request also skips the post-publish git commit and push flow."
         }
       ]
     },
@@ -167,6 +176,9 @@
         },
         {
           "text": "A natural WeChat follow prompt is included when the article is going to the WeChat draft box."
+        },
+        {
+          "text": "After a successful WeChat draft publish, the generated Markdown and article assets are committed and pushed."
         }
       ]
     },
@@ -184,6 +196,9 @@
         },
         {
           "text": "The generated article does not promise resources, source code, courses, communities, discounts, or consulting that were not actually provided."
+        },
+        {
+          "text": "After WeChat draft publishing succeeds, git status is checked and only this article's files are staged before commit and push."
         }
       ]
     },
@@ -201,6 +216,9 @@
         },
         {
           "text": "The article preserves source-grounded reasoning and boundaries instead of inventing claims."
+        },
+        {
+          "text": "The explicit no-WeChat request also prevents any post-publish git commit or push."
         }
       ]
     }

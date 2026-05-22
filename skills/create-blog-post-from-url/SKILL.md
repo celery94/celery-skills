@@ -380,3 +380,27 @@ Markdown 文件创建完成并通过最终检查后，默认自动使用 **wecha
 - Look for a `.env` file in the project directory or parent directories
 - `app_id` 和 `app_secret` 从 `.env` 文件中的 `WECHAT_APP_ID` / `WECHAT_APP_SECRET` 读取，不要向用户索要
 - 发布成功后向用户展示返回的 `media_id`，并提醒去微信公众平台后台检查草稿箱
+
+## 14. Git 提交与推送
+
+如果微信公众号草稿箱发布成功，并且 `wechat-draft` 已返回 `media_id`，继续在博客项目目录执行 git 提交与推送。
+
+如果用户明确说“不发布”“不要发微信”“只生成博客”，跳过微信公众号发布步骤，同时跳过本节 git 流程。
+
+如果微信公众号发布失败，停止 git 提交与推送，向用户报告失败原因和已经生成的本地文件。
+
+### 提交范围
+
+只提交本次文章相关文件，避免带入无关改动：
+
+- `src/data/blog/{ID}-{slug}.md`
+- `src/assets/{ID}/` 下的封面、正文图片、`cover-brief.json` 和其他本次生成资源
+
+### 执行规则
+
+1. 运行 `git status --short --branch`，确认当前分支、远端跟踪关系和工作区改动。
+2. 只 stage 本次文章相关文件，不要使用会包含无关改动的宽泛路径。
+3. 使用 `git commit -m "Add blog post: {title}"` 提交，`{title}` 使用 frontmatter 中的中文标题。
+4. 推送当前分支到它的 upstream。
+5. 如果当前分支没有 upstream，推送到 `origin` 的同名分支并设置 upstream。
+6. 完成后向用户报告 `media_id`、commit hash 和推送分支。
